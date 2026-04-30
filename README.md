@@ -1,18 +1,61 @@
-# React + Vite
+# 🧾 InvoiceFlow SaaS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+InvoiceFlow is a premium, full-stack Invoice Management SaaS Frontend tailored for SMEs, schools, and freelancers. It is designed with a modern glassmorphism aesthetic, responsive mobile-first architecture, and advanced billing features.
 
-Currently, two official plugins are available:
+![InvoiceFlow Preview](screenshots/login-page.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Key Features
 
-## React Compiler
+* **🔐 Authentication & Protected Routing**: Centralized AuthContext with token-based simulated login, guarded routes, and a beautiful split-layout auth screen.
+* **👥 Customer Management (CRM)**: A built-in CRM to add, edit, and manage clients, storing data persistently in `localStorage`.
+* **🧾 Dynamic Invoice Builder**: An interactive builder with real-time tax/total calculations and dynamic line items.
+* **📱 QR Code Payment Integration**: Automatically generates unique, scan-to-pay QR codes directly on the invoice using `qrcode.react`, embedding invoice ID and bank instructions.
+* **🏢 Company Branding System**: Customize the platform to fit your business. Update your company name, select from global currencies (PKR, USD, EUR, GBP), pick a brand theme color, and set custom footer/payment instructions. The invoice preview updates dynamically.
+* **✨ Premium UI/UX**: Built entirely with Tailwind CSS v4 featuring soft shadows, rounded borders, pulse animations, staggered entrances, and full responsive support (collapsible sidebar for mobile).
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## 🛠️ Tech Stack
 
-Note: This will impact Vite dev & build performances.
+* **Framework:** React 19 + Vite
+* **Styling:** Tailwind CSS v4 (Custom design tokens & utilities)
+* **Routing:** React Router v7
+* **QR Codes:** `qrcode.react`
+* **Unique IDs:** `uuid`
+* **Testing:** Playwright (E2E)
 
-## Expanding the ESLint configuration
+## 📦 Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Prerequisites
+Make sure you have Node.js installed.
+
+### Installation
+1. Clone the repository and navigate to the directory.
+2. Install the dependencies:
+```bash
+npm install
+```
+
+### Run the Development Server
+```bash
+npm run dev
+```
+The app will be available at `http://localhost:5174`.
+
+## 🧪 Testing
+
+This project includes complete End-to-End (E2E) testing powered by **Playwright**. The tests thoroughly verify the Login flow, Registration, form validations, and route navigation.
+
+To run the Playwright tests:
+```bash
+# Install Playwright browsers (first time only)
+npx playwright install
+
+# Run the test suite
+npx playwright test tests/auth.spec.js
+```
+*Make sure your dev server (`npm run dev`) is running before executing the tests.*
+
+## 🛣️ Roadmap
+- [x] Phase 1: Frontend Architecture, Auth, UI Design System
+- [x] Phase 2: CRM, QR Code Payments, Branding Preferences
+- [ ] Phase 3: Bulk Send System (Fee Vouchers for Schools)
+- [ ] Phase 4: Backend Integration (Laravel/Node REST API)
