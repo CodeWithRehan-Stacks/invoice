@@ -1,5 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
+import { QRCodeSVG } from "qrcode.react";
+import { v4 as uuidv4 } from "uuid";
 
 /* ── Helpers ───────────────────────────────────────────────────── */
 const fmt = (n) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -14,6 +16,18 @@ const I = ({ d, size = 18, cls = "" }) => (
 );
 
 export default function CreateInvoice() {
+  /* ── Settings & Customers ───────────────────────────────────── */
+  const [customers, setCustomers] = useState([]);
+  const [branding, setBranding] = useState({ themeColor: "#6366f1", footerText: "", bankDetails: "", companyName: "InvoiceFlow", currency: "PKR" });
+
+  useEffect(() => {
+    const savedCustomers = localStorage.getItem("invoice_customers");
+    if (savedCustomers) setCustomers(JSON.parse(savedCustomers));
+    
+    const savedBranding = localStorage.getItem("invoice_branding");
+    if (savedBranding) setBranding(JSON.parse(savedBranding));
+  }, []);
+
   /* ── Client info ────────────────────────────────────────────── */
   const [client, setClient] = useState({
     name: "",
@@ -23,7 +37,8 @@ export default function CreateInvoice() {
   });
 
   /* ── Invoice meta ───────────────────────────────────────────── */
-  const [invoiceNumber, setInvoiceNumber] = useState("INV-007");
+  const [invoiceId] = useState(() => uuidv4());
+  const [invoiceNumber, setInvoiceNumber] = useState(`INV-${Math.floor(1000 + Math.random() * 9000)}`);
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
@@ -89,10 +104,24 @@ export default function CreateInvoice() {
 
             {/* ── Client Info ──────────────────────────────── */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
-              <h2 className="text-base font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                <I d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" cls="text-brand-500" />
-                Client Information
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-slate-700 flex items-center gap-2">
+                  <I d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" cls="text-brand-500" />
+                  Client Information
+                </h2>
+                {customers.length > 0 && (
+                  <select 
+                    onChange={(e) => {
+                      const c = customers.find(c => c.id === e.target.value);
+                      if (c) setClient({ name: c.name, email: c.email, phone: c.phone, address: c.notes || "" });
+                    }}
+                    className="text-sm border border-slate-200 rounded-lg px-2 py-1 outline-none focus:border-brand-400 bg-slate-50"
+                  >
+                    <option value="">Select Existing...</option>
+                    {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                )}
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Client Name" id="client-name" placeholder="Acme Corp" value={client.name} onChange={(e) => setClient({ ...client, name: e.target.value })} />
                 <Field label="Email" id="client-email" type="email" placeholder="billing@acme.com" value={client.email} onChange={(e) => setClient({ ...client, email: e.target.value })} />
@@ -161,7 +190,7 @@ export default function CreateInvoice() {
                     {/* Line total */}
                     <div className="flex items-center sm:justify-end">
                       <label className="text-xs text-slate-400 sm:hidden mr-2">Total:</label>
-                      <span className="text-sm font-semibold text-slate-700">${fmt(item.qty * item.rate)}</span>
+                      <span className="text-sm font-semibold text-slate-700">{branding.currency} {fmt(item.qty * item.rate)}</span>
                     </div>
                     {/* Remove */}
                     <div className="flex items-center justify-end sm:justify-center">
@@ -229,15 +258,16 @@ export default function CreateInvoice() {
             <div className="xl:sticky xl:top-24">
               <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 {/* Preview header band */}
-                <div className="bg-gradient-to-r from-brand-500 to-accent-500 px-6 py-5 text-white">
+                <div className="px-6 py-5 text-white" style={{ backgroundColor: branding.themeColor }}>
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-bold">INVOICE</h3>
-                      <p className="text-white/70 text-sm mt-0.5">{invoiceNumber || "INV-000"}</p>
+                      <p className="text-white/80 text-sm mt-0.5">{invoiceNumber || "INV-000"}</p>
                     </div>
                     <div className="text-right text-sm">
-                      <p className="text-white/70">Date: {invoiceDate || "—"}</p>
-                      <p className="text-white/70">Due: {dueDate || "—"}</p>
+                      <p className="text-white font-bold mb-1">{branding.companyName}</p>
+                      <p className="text-white/80">Date: {invoiceDate || "—"}</p>
+                      <p className="text-white/80">Due: {dueDate || "—"}</p>
                     </div>
                   </div>
                 </div>
@@ -268,8 +298,8 @@ export default function CreateInvoice() {
                           <tr key={item.id}>
                             <td className="px-4 py-3 text-slate-700">{item.description || "—"}</td>
                             <td className="px-3 py-3 text-center text-slate-600">{item.qty}</td>
-                            <td className="px-3 py-3 text-right text-slate-600">${fmt(item.rate)}</td>
-                            <td className="px-4 py-3 text-right font-semibold text-slate-700">${fmt(item.qty * item.rate)}</td>
+                            <td className="px-3 py-3 text-right text-slate-600">{fmt(item.rate)}</td>
+                            <td className="px-4 py-3 text-right font-semibold text-slate-700">{fmt(item.qty * item.rate)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -280,27 +310,52 @@ export default function CreateInvoice() {
                   <div className="space-y-2 pt-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500">Subtotal</span>
-                      <span className="text-slate-700 font-medium">${fmt(subtotal)}</span>
+                      <span className="text-slate-700 font-medium">{branding.currency} {fmt(subtotal)}</span>
                     </div>
                     {taxRate > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-500">Tax ({taxRate}%)</span>
-                        <span className="text-slate-700 font-medium">${fmt(tax)}</span>
+                        <span className="text-slate-700 font-medium">{branding.currency} {fmt(tax)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-base font-bold pt-2 border-t border-slate-100">
                       <span className="text-slate-800">Total</span>
-                      <span className="bg-gradient-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent text-lg">
-                        ${fmt(total)}
+                      <span className="text-lg" style={{ color: branding.themeColor }}>
+                        {branding.currency} {fmt(total)}
                       </span>
                     </div>
                   </div>
 
-                  {/* Notes */}
-                  {notes && (
+                  {/* Payment Details & QR Code */}
+                  <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between gap-6">
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Payment Details</p>
+                      <p className="text-sm text-slate-600 whitespace-pre-wrap">{branding.bankDetails || "Bank details not provided."}</p>
+                    </div>
+                    <div className="flex-shrink-0 flex flex-col items-center">
+                      <div className="p-2 bg-white border border-slate-200 rounded-xl shadow-sm">
+                        <QRCodeSVG 
+                          value={JSON.stringify({ invoice: invoiceNumber, id: invoiceId, amount: total, currency: branding.currency })} 
+                          size={90} 
+                          fgColor={branding.themeColor} 
+                        />
+                      </div>
+                      <span className="text-[10px] text-slate-400 mt-2">Scan to Pay</span>
+                    </div>
+                  </div>
+
+                  {/* Notes & Footer */}
+                  {(notes || branding.footerText) && (
                     <div className="pt-3 border-t border-slate-100">
-                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Notes</p>
-                      <p className="text-sm text-slate-500 whitespace-pre-wrap">{notes}</p>
+                      {notes && (
+                        <div className="mb-3">
+                          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Notes</p>
+                          <p className="text-sm text-slate-500 whitespace-pre-wrap">{notes}</p>
+                        </div>
+                      )}
+                      {branding.footerText && (
+                        <p className="text-xs text-center text-slate-400 italic mt-4">{branding.footerText}</p>
+                      )}
                     </div>
                   )}
                 </div>

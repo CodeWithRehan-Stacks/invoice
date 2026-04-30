@@ -6,6 +6,8 @@ import Home from "./pages/Home";
 import Register from "./pages/register";
 import Dashboard from "./pages/Dashboard";
 import CreateInvoice from "./pages/CreateInvoice";
+import Customers from "./pages/Customers";
+import BrandingSettings from "./pages/BrandingSettings";
 import Settings from "./pages/Settings";
 
 export default function App() {
@@ -18,6 +20,8 @@ export default function App() {
       {/* Protected routes */}
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/dashboard/create" element={<ProtectedRoute><CreateInvoice /></ProtectedRoute>} />
+      <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
+      <Route path="/settings/branding" element={<ProtectedRoute><BrandingSettings /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
       {/* Catch-all */}

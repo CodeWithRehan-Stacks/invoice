@@ -21,6 +21,8 @@ const icons = {
   search:    "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z M21 21l-4.35-4.35",
   plus:      "M12 5v14M5 12h14",
   user:      "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+  customers: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75",
+  branding:  "M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z M16 8L2 22 M17.5 15H9",
   chevDown:  "M6 9l6 6 6-6",
 };
 
@@ -34,7 +36,9 @@ const SettingsIcon = () => (
 
 const navItems = [
   { to: "/dashboard",        label: "Dashboard",      icon: icons.dashboard },
+  { to: "/customers",        label: "Customers",      icon: icons.customers },
   { to: "/dashboard/create",  label: "Create Invoice", icon: icons.invoice },
+  { to: "/settings/branding", label: "Branding",       icon: icons.branding },
   { to: "/settings",          label: "Settings",       icon: null, isSettings: true },
 ];
 
