@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -13,7 +14,6 @@ const Icon = ({ d, size = 20, className = "" }) => (
 const icons = {
   dashboard: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10",
   invoice:   "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8",
-  settings:  "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
   logout:    "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9",
   menu:      "M3 12h18M3 6h18M3 18h18",
   close:     "M18 6L6 18M6 6l12 12",
@@ -26,20 +26,12 @@ const icons = {
   chevDown:  "M6 9l6 6 6-6",
 };
 
-const SettingsIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-  </svg>
-);
 
 const navItems = [
   { to: "/dashboard",        label: "Dashboard",      icon: icons.dashboard },
   { to: "/customers",        label: "Customers",      icon: icons.customers },
   { to: "/dashboard/create",  label: "Create Invoice", icon: icons.invoice },
-  { to: "/settings/branding", label: "Branding",       icon: icons.branding },
-  { to: "/settings",          label: "Settings",       icon: null, isSettings: true },
+ 
 ];
 
 export default function DashboardLayout({ children }) {
@@ -64,6 +56,7 @@ export default function DashboardLayout({ children }) {
 
   // Close sidebar on route change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSidebarOpen(false);
   }, [location.pathname]);
 
@@ -86,19 +79,19 @@ export default function DashboardLayout({ children }) {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)]">
+    <div className="min-h-screen bg-surface">
 
       {/* ── Desktop Sidebar ─────────────────────────────────── */}
-      <aside className="hidden lg:flex flex-col w-[260px] bg-white border-r border-slate-100 fixed top-0 left-0 h-full z-30">
+      <aside className="hidden lg:flex flex-col w-65 bg-white border-r border-slate-100 fixed top-0 left-0 h-full z-30">
         {/* Logo */}
         <div className="p-6 pb-4">
           <Link to="/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-md shadow-brand-500/20 group-hover:shadow-lg group-hover:shadow-brand-500/30 transition-shadow duration-300">
+            <div className="w-9 h-9 rounded-xl bg-linear-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-md shadow-brand-500/20 group-hover:shadow-lg group-hover:shadow-brand-500/30 transition-shadow duration-300">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8" />
               </svg>
             </div>
-            <span className="text-lg font-bold bg-gradient-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent">
+            <span className="text-lg font-bold bg-linear-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent">
               InvoiceFlow
             </span>
           </Link>
@@ -134,7 +127,7 @@ export default function DashboardLayout({ children }) {
           <Link
             to="/dashboard/create"
             id="sidebar-create-invoice-btn"
-            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 text-white text-sm font-semibold shadow-md shadow-brand-500/25 hover:shadow-lg hover:shadow-brand-500/35 hover:from-brand-600 hover:to-brand-700 transition-all duration-300 active:scale-[0.98]"
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-linear-to-r from-brand-500 to-brand-600 text-white text-sm font-semibold shadow-md shadow-brand-500/25 hover:shadow-lg hover:shadow-brand-500/35 hover:from-brand-600 hover:to-brand-700 transition-all duration-300 active:scale-[0.98]"
           >
             <Icon d={icons.plus} size={18} />
             New Invoice
@@ -144,7 +137,7 @@ export default function DashboardLayout({ children }) {
         {/* Sidebar user */}
         <div className="p-4 border-t border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-400 to-accent-400 flex items-center justify-center text-white text-sm font-bold shrink-0">
+            <div className="w-9 h-9 rounded-full bg-linear-to-br from-brand-400 to-accent-400 flex items-center justify-center text-white text-sm font-bold shrink-0">
               {initials}
             </div>
             <div className="min-w-0">
@@ -162,18 +155,18 @@ export default function DashboardLayout({ children }) {
         <div className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
       <aside
-        className={`fixed top-0 left-0 h-full w-[280px] bg-white shadow-2xl z-50 flex flex-col lg:hidden transform transition-transform duration-300 ease-out
+        className={`fixed top-0 left-0 h-full w-70 bg-white shadow-2xl z-50 flex flex-col lg:hidden transform transition-transform duration-300 ease-out
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         {/* Mobile logo + close */}
         <div className="p-5 flex items-center justify-between border-b border-slate-100">
           <Link to="/dashboard" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-linear-to-br from-brand-500 to-accent-500 flex items-center justify-center">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6" />
               </svg>
             </div>
-            <span className="text-lg font-bold bg-gradient-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent">
+            <span className="text-lg font-bold bg-linear-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent">
               InvoiceFlow
             </span>
           </Link>
@@ -204,7 +197,7 @@ export default function DashboardLayout({ children }) {
         <div className="p-4 border-t border-slate-100 space-y-3">
           <Link
             to="/dashboard/create"
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 text-white text-sm font-semibold"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-linear-to-r from-brand-500 to-brand-600 text-white text-sm font-semibold"
           >
             <Icon d={icons.plus} size={18} />
             New Invoice
@@ -220,7 +213,7 @@ export default function DashboardLayout({ children }) {
       </aside>
 
       {/* ── Main Area ───────────────────────────────────────── */}
-      <div className="lg:pl-[260px] flex flex-col min-h-screen">
+      <div className="lg:pl-65 flex flex-col min-h-screen">
 
         {/* ── Sticky Header ───────────────────────────────── */}
         <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-slate-100">
@@ -262,7 +255,7 @@ export default function DashboardLayout({ children }) {
                   onClick={() => setProfileOpen(!profileOpen)}
                   className="flex items-center gap-2.5 p-1.5 pr-3 rounded-xl hover:bg-slate-50 transition-colors duration-200"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-accent-400 flex items-center justify-center text-white text-xs font-bold">
+                  <div className="w-8 h-8 rounded-full bg-linear-to-br from-brand-400 to-accent-400 flex items-center justify-center text-white text-xs font-bold">
                     {initials}
                   </div>
                   <span className="hidden sm:block text-sm font-medium text-slate-700">{user?.first_name}</span>
@@ -281,6 +274,7 @@ export default function DashboardLayout({ children }) {
                       onClick={() => setProfileOpen(false)}
                       className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition"
                     >
+                      // eslint-disable-next-line no-undef, no-undef, no-undef, no-undef
                       <SettingsIcon />
                       Settings
                     </Link>

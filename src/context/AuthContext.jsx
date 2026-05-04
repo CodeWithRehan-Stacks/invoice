@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
 
     const fetchUser = async () => {
       try {
-        const res = await fetch(`${API_BASE}/user`, {
+        const res = await fetch(`${API_BASE}/me`, {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
@@ -65,30 +65,7 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const register = async (formData) => {
-    const res = await fetch(`${API_BASE}/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(formData),
-    });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      const err = new Error(data.message || "Registration failed");
-      err.status = res.status;
-      err.errors = data.errors;
-      throw err;
-    }
-
-    localStorage.setItem("auth_token", data.token);
-    if (data.user) {
-      localStorage.setItem("user", JSON.stringify(data.user));
-      setUser(data.user);
-    }
-    setToken(data.token);
-    return data;
-  };
 
   const logout = async () => {
     try {
@@ -144,7 +121,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, isAuthenticated, login, register, logout, updateUser, setUser }}
+      value={{ user, token, loading, isAuthenticated, login, logout, updateUser, setUser }}
     >
       {children}
     </AuthContext.Provider>

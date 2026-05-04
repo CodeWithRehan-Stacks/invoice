@@ -1,385 +1,262 @@
-import { useState, useMemo, useEffect } from "react";
-import DashboardLayout from "../components/DashboardLayout";
-import { QRCodeSVG } from "qrcode.react";
-import { v4 as uuidv4 } from "uuid";
-
-/* ── Helpers ───────────────────────────────────────────────────── */
-const fmt = (n) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-const emptyItem = () => ({ id: Date.now(), description: "", qty: 1, rate: 0 });
-
-const I = ({ d, size = 18, cls = "" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-    strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={cls}>
-    <path d={d} />
-  </svg>
-);
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Save, X, Plus, Trash2, Calendar, User, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function CreateInvoice() {
-  /* ── Settings & Customers ───────────────────────────────────── */
-  const [customers, setCustomers] = useState([]);
-  const [branding, setBranding] = useState({ themeColor: "#6366f1", footerText: "", bankDetails: "", companyName: "InvoiceFlow", currency: "PKR" });
-
-  useEffect(() => {
-    const savedCustomers = localStorage.getItem("invoice_customers");
-    if (savedCustomers) setCustomers(JSON.parse(savedCustomers));
-    
-    const savedBranding = localStorage.getItem("invoice_branding");
-    if (savedBranding) setBranding(JSON.parse(savedBranding));
-  }, []);
-
-  /* ── Client info ────────────────────────────────────────────── */
-  const [client, setClient] = useState({
-    name: "",
-    email: "",
-    address: "",
-    phone: "",
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    studentId: '',
+    invoiceDate: new Date().toISOString().split('T')[0],
+    dueDate: '',
+    notes: '',
   });
 
-  /* ── Invoice meta ───────────────────────────────────────────── */
-  const [invoiceId] = useState(() => uuidv4());
-  const [invoiceNumber, setInvoiceNumber] = useState(`INV-${Math.floor(1000 + Math.random() * 9000)}`);
-  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().slice(0, 10));
-  const [dueDate, setDueDate] = useState("");
-  const [notes, setNotes] = useState("");
+  const [items, setItems] = useState([
+    { id: 1, description: 'Tuition Fee', quantity: 1, price: 500 },
+  ]);
 
-  /* ── Line items ─────────────────────────────────────────────── */
-  const [items, setItems] = useState([emptyItem()]);
-  const [taxRate, setTaxRate] = useState(0);
+  const [errors, setErrors] = useState({});
+  const [total, setTotal] = useState(0);
 
-  const addItem = () => setItems([...items, emptyItem()]);
-  const removeItem = (id) => items.length > 1 && setItems(items.filter((i) => i.id !== id));
+  useEffect(() => {
+    const newTotal = items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.price)), 0);
+    setTotal(newTotal);
+  }, [items]);
 
-  const updateItem = (id, field, value) => {
-    setItems(items.map((i) =>
-      i.id === id ? { ...i, [field]: field === "description" ? value : Number(value) || 0 } : i
-    ));
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  /* ── Computed totals ────────────────────────────────────────── */
-  const subtotal = useMemo(() => items.reduce((s, i) => s + i.qty * i.rate, 0), [items]);
-  const tax = useMemo(() => subtotal * (taxRate / 100), [subtotal, taxRate]);
-  const total = subtotal + tax;
+  const handleItemChange = (id, field, value) => {
+    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+  };
 
-  /* ── Field component ────────────────────────────────────────── */
-  const Field = ({ label, id, ...props }) => (
-    <div>
-      <label htmlFor={id} className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</label>
-      <input
-        id={id}
-        {...props}
-        className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 focus:outline-none transition-all duration-200"
-      />
-    </div>
-  );
+  const addItem = () => {
+    setItems((prev) => [...prev, { id: Date.now(), description: '', quantity: 1, price: 0 }]);
+  };
+
+  const removeItem = (id) => {
+    if (items.length > 1) {
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    }
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.studentId) newErrors.studentId = 'Student selection is required';
+    if (!formData.dueDate) newErrors.dueDate = 'Due date is required';
+    if (items.some((item) => !item.description || item.price <= 0)) {
+      newErrors.items = 'All items must have a description and valid price';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (validate()) {
+      // API Call would go here
+      console.log('Submitting:', { ...formData, items, total });
+      navigate('/invoices');
+    }
+  };
 
   return (
-    <DashboardLayout>
-      <div className="animate-fade-in">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Create Invoice</h1>
-          <p className="text-slate-500 text-sm mt-1">Fill in the details to generate a new invoice.</p>
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Create Invoice</h2>
+          <p className="text-slate-500 dark:text-slate-400">Generate a new fee invoice for a student.</p>
         </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
-
-          {/* ════════════════════════════════════════════════════
-              LEFT — Form (3 cols)
-             ════════════════════════════════════════════════════ */}
-          <div className="xl:col-span-3 space-y-6">
-
-            {/* ── Invoice Details ──────────────────────────── */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
-              <h2 className="text-base font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                <I d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6" cls="text-brand-500" />
-                Invoice Details
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Field label="Invoice #" id="invoice-number" value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} />
-                <Field label="Date" id="invoice-date" type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
-                <Field label="Due Date" id="due-date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-              </div>
-            </div>
-
-            {/* ── Client Info ──────────────────────────────── */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-slate-700 flex items-center gap-2">
-                  <I d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" cls="text-brand-500" />
-                  Client Information
-                </h2>
-                {customers.length > 0 && (
-                  <select 
-                    onChange={(e) => {
-                      const c = customers.find(c => c.id === e.target.value);
-                      if (c) setClient({ name: c.name, email: c.email, phone: c.phone, address: c.notes || "" });
-                    }}
-                    className="text-sm border border-slate-200 rounded-lg px-2 py-1 outline-none focus:border-brand-400 bg-slate-50"
-                  >
-                    <option value="">Select Existing...</option>
-                    {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                )}
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Client Name" id="client-name" placeholder="Acme Corp" value={client.name} onChange={(e) => setClient({ ...client, name: e.target.value })} />
-                <Field label="Email" id="client-email" type="email" placeholder="billing@acme.com" value={client.email} onChange={(e) => setClient({ ...client, email: e.target.value })} />
-                <Field label="Phone" id="client-phone" placeholder="+1 234 567 890" value={client.phone} onChange={(e) => setClient({ ...client, phone: e.target.value })} />
-                <Field label="Address" id="client-address" placeholder="123 Main St, City" value={client.address} onChange={(e) => setClient({ ...client, address: e.target.value })} />
-              </div>
-            </div>
-
-            {/* ── Line Items ───────────────────────────────── */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
-              <h2 className="text-base font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                <I d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2 M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2 M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" cls="text-brand-500" />
-                Items
-              </h2>
-
-              {/* Column headers (desktop) */}
-              <div className="hidden sm:grid grid-cols-[1fr_80px_100px_100px_40px] gap-3 mb-2 px-1">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Description</span>
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Qty</span>
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Rate ($)</span>
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider text-right">Total</span>
-                <span />
-              </div>
-
-              {/* Rows */}
-              <div className="space-y-3">
-                {items.map((item, idx) => (
-                  <div key={item.id} className="grid grid-cols-1 sm:grid-cols-[1fr_80px_100px_100px_40px] gap-3 items-start bg-slate-50/50 rounded-xl p-3 sm:p-2 sm:bg-transparent sm:rounded-none border sm:border-0 border-slate-100">
-                    {/* Description */}
-                    <div>
-                      <label className="text-xs text-slate-400 sm:hidden mb-1 block">Description</label>
-                      <input
-                        id={`item-desc-${idx}`}
-                        placeholder="Service / Product"
-                        value={item.description}
-                        onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 focus:outline-none transition"
-                      />
-                    </div>
-                    {/* Qty */}
-                    <div>
-                      <label className="text-xs text-slate-400 sm:hidden mb-1 block">Qty</label>
-                      <input
-                        id={`item-qty-${idx}`}
-                        type="number"
-                        min="1"
-                        value={item.qty}
-                        onChange={(e) => updateItem(item.id, "qty", e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-700 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 focus:outline-none transition"
-                      />
-                    </div>
-                    {/* Rate */}
-                    <div>
-                      <label className="text-xs text-slate-400 sm:hidden mb-1 block">Rate ($)</label>
-                      <input
-                        id={`item-rate-${idx}`}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={item.rate || ""}
-                        onChange={(e) => updateItem(item.id, "rate", e.target.value)}
-                        placeholder="0.00"
-                        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-700 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 focus:outline-none transition"
-                      />
-                    </div>
-                    {/* Line total */}
-                    <div className="flex items-center sm:justify-end">
-                      <label className="text-xs text-slate-400 sm:hidden mr-2">Total:</label>
-                      <span className="text-sm font-semibold text-slate-700">{branding.currency} {fmt(item.qty * item.rate)}</span>
-                    </div>
-                    {/* Remove */}
-                    <div className="flex items-center justify-end sm:justify-center">
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        disabled={items.length <= 1}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition disabled:opacity-30 disabled:cursor-not-allowed"
-                        title="Remove item"
-                      >
-                        <I d="M18 6L6 18M6 6l12 12" size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Add item button */}
-              <button
-                id="add-item-btn"
-                onClick={addItem}
-                className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-dashed border-slate-200 text-sm font-medium text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50/30 transition-all duration-200 w-full justify-center"
-              >
-                <I d="M12 5v14M5 12h14" size={16} />
-                Add Item
-              </button>
-            </div>
-
-            {/* ── Tax & Notes ──────────────────────────────── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
-                <h2 className="text-base font-semibold text-slate-700 mb-3">Tax Rate</h2>
-                <div className="flex items-center gap-2">
-                  <input
-                    id="tax-rate"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.5"
-                    value={taxRate || ""}
-                    onChange={(e) => setTaxRate(Number(e.target.value) || 0)}
-                    placeholder="0"
-                    className="w-24 px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 focus:outline-none transition"
-                  />
-                  <span className="text-sm text-slate-500 font-medium">%</span>
-                </div>
-              </div>
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
-                <h2 className="text-base font-semibold text-slate-700 mb-3">Notes</h2>
-                <textarea
-                  id="invoice-notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Payment terms, thank you message…"
-                  rows={3}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 resize-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 focus:outline-none transition"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* ════════════════════════════════════════════════════
-              RIGHT — Live Preview (2 cols)
-             ════════════════════════════════════════════════════ */}
-          <div className="xl:col-span-2">
-            <div className="xl:sticky xl:top-24">
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                {/* Preview header band */}
-                <div className="px-6 py-5 text-white" style={{ backgroundColor: branding.themeColor }}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-bold">INVOICE</h3>
-                      <p className="text-white/80 text-sm mt-0.5">{invoiceNumber || "INV-000"}</p>
-                    </div>
-                    <div className="text-right text-sm">
-                      <p className="text-white font-bold mb-1">{branding.companyName}</p>
-                      <p className="text-white/80">Date: {invoiceDate || "—"}</p>
-                      <p className="text-white/80">Due: {dueDate || "—"}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-6 space-y-6">
-                  {/* Client */}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Bill To</p>
-                    <p className="text-sm font-semibold text-slate-700">{client.name || "Client Name"}</p>
-                    <p className="text-sm text-slate-500">{client.email || "client@email.com"}</p>
-                    {client.phone && <p className="text-sm text-slate-500">{client.phone}</p>}
-                    {client.address && <p className="text-sm text-slate-500">{client.address}</p>}
-                  </div>
-
-                  {/* Items table */}
-                  <div className="border border-slate-100 rounded-xl overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-50">
-                        <tr className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                          <th className="px-4 py-2.5 text-left">Item</th>
-                          <th className="px-3 py-2.5 text-center w-14">Qty</th>
-                          <th className="px-3 py-2.5 text-right w-20">Rate</th>
-                          <th className="px-4 py-2.5 text-right w-24">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-50">
-                        {items.map((item) => (
-                          <tr key={item.id}>
-                            <td className="px-4 py-3 text-slate-700">{item.description || "—"}</td>
-                            <td className="px-3 py-3 text-center text-slate-600">{item.qty}</td>
-                            <td className="px-3 py-3 text-right text-slate-600">{fmt(item.rate)}</td>
-                            <td className="px-4 py-3 text-right font-semibold text-slate-700">{fmt(item.qty * item.rate)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Totals */}
-                  <div className="space-y-2 pt-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">Subtotal</span>
-                      <span className="text-slate-700 font-medium">{branding.currency} {fmt(subtotal)}</span>
-                    </div>
-                    {taxRate > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">Tax ({taxRate}%)</span>
-                        <span className="text-slate-700 font-medium">{branding.currency} {fmt(tax)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-base font-bold pt-2 border-t border-slate-100">
-                      <span className="text-slate-800">Total</span>
-                      <span className="text-lg" style={{ color: branding.themeColor }}>
-                        {branding.currency} {fmt(total)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Payment Details & QR Code */}
-                  <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between gap-6">
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Payment Details</p>
-                      <p className="text-sm text-slate-600 whitespace-pre-wrap">{branding.bankDetails || "Bank details not provided."}</p>
-                    </div>
-                    <div className="flex-shrink-0 flex flex-col items-center">
-                      <div className="p-2 bg-white border border-slate-200 rounded-xl shadow-sm">
-                        <QRCodeSVG 
-                          value={JSON.stringify({ invoice: invoiceNumber, id: invoiceId, amount: total, currency: branding.currency })} 
-                          size={90} 
-                          fgColor={branding.themeColor} 
-                        />
-                      </div>
-                      <span className="text-[10px] text-slate-400 mt-2">Scan to Pay</span>
-                    </div>
-                  </div>
-
-                  {/* Notes & Footer */}
-                  {(notes || branding.footerText) && (
-                    <div className="pt-3 border-t border-slate-100">
-                      {notes && (
-                        <div className="mb-3">
-                          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Notes</p>
-                          <p className="text-sm text-slate-500 whitespace-pre-wrap">{notes}</p>
-                        </div>
-                      )}
-                      {branding.footerText && (
-                        <p className="text-xs text-center text-slate-400 italic mt-4">{branding.footerText}</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Action buttons */}
-                <div className="p-5 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
-                  <button
-                    id="save-invoice-btn"
-                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 text-white text-sm font-semibold shadow-md shadow-brand-500/25 hover:shadow-lg hover:from-brand-600 hover:to-brand-700 transition-all duration-300 active:scale-[0.98]"
-                  >
-                    Save Invoice
-                  </button>
-                  <button
-                    id="download-pdf-btn"
-                    className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all duration-200"
-                  >
-                    Download PDF
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="flex gap-3">
+          <button onClick={() => navigate('/invoices')} className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium transition-colors">
+            Cancel
+          </button>
+          <button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium shadow-sm transition-colors">
+            <Save size={18} />
+            Save Invoice
+          </button>
         </div>
       </div>
-    </DashboardLayout>
+
+      <motion.form 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+      >
+        {/* Left Column - Form Details */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+              <User size={18} className="text-blue-500" />
+              Invoice Details
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Select Student *</label>
+                <select
+                  name="studentId"
+                  value={formData.studentId}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${errors.studentId ? 'border-red-500' : 'border-slate-200 dark:border-slate-600'}`}
+                >
+                  <option value="">-- Choose Student --</option>
+                  <option value="STU-001">Student Name 1</option>
+                  <option value="STU-002">Student Name 2</option>
+                </select>
+                {errors.studentId && <p className="text-xs text-red-500 mt-1">{errors.studentId}</p>}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Invoice Date</label>
+                <div className="relative">
+                  <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="date"
+                    name="invoiceDate"
+                    value={formData.invoiceDate}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Due Date *</label>
+                <div className="relative">
+                  <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="date"
+                    name="dueDate"
+                    value={formData.dueDate}
+                    onChange={handleInputChange}
+                    className={`w-full pl-10 pr-3 py-2 border rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${errors.dueDate ? 'border-red-500' : 'border-slate-200 dark:border-slate-600'}`}
+                  />
+                </div>
+                {errors.dueDate && <p className="text-xs text-red-500 mt-1">{errors.dueDate}</p>}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+                <FileText size={18} className="text-blue-500" />
+                Line Items
+              </h3>
+              <button type="button" onClick={addItem} className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-md transition-colors">
+                <Plus size={16} /> Add Item
+              </button>
+            </div>
+            
+            {errors.items && <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">{errors.items}</div>}
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-12 gap-4 text-sm font-medium text-slate-500 dark:text-slate-400 px-2">
+                <div className="col-span-6">Description</div>
+                <div className="col-span-2 text-center">Qty</div>
+                <div className="col-span-3 text-right">Price ($)</div>
+                <div className="col-span-1"></div>
+              </div>
+              
+              {items.map((item, index) => (
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                  key={item.id} 
+                  className="grid grid-cols-12 gap-4 items-center bg-slate-50 dark:bg-slate-700/50 p-2 rounded-lg border border-slate-100 dark:border-slate-700"
+                >
+                  <div className="col-span-6">
+                    <input
+                      type="text"
+                      placeholder="Item description"
+                      value={item.description}
+                      onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <input
+                      type="number"
+                      min="1"
+                      value={item.quantity}
+                      onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-center focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.price}
+                      onChange={(e) => handleItemChange(item.id, 'price', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-right focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    />
+                  </div>
+                  <div className="col-span-1 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => removeItem(item.id)}
+                      disabled={items.length === 1}
+                      className="p-2 text-slate-400 hover:text-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-md hover:bg-white dark:hover:bg-slate-800"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            
+            <div className="mt-6 space-y-1">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Notes / Instructions</label>
+              <textarea
+                name="notes"
+                rows="3"
+                value={formData.notes}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                placeholder="Payment terms, special instructions, etc."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Summary */}
+        <div className="space-y-6">
+          <div className="bg-blue-50 dark:bg-slate-800 rounded-xl shadow-sm border border-blue-100 dark:border-slate-700 p-6 sticky top-6">
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Summary</h3>
+            
+            <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span className="font-medium text-slate-800 dark:text-white">${total.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tax (0%)</span>
+                <span className="font-medium text-slate-800 dark:text-white">$0.00</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Discount</span>
+                <span className="font-medium text-slate-800 dark:text-white">$0.00</span>
+              </div>
+              <div className="pt-3 border-t border-blue-200 dark:border-slate-700 flex justify-between items-center">
+                <span className="text-base font-semibold text-slate-800 dark:text-white">Total Amount</span>
+                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">${total.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <button type="button" onClick={handleSubmit} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium shadow-sm transition-colors flex justify-center items-center gap-2">
+                <Save size={18} />
+                Generate Invoice
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.form>
+    </div>
   );
 }

@@ -3,26 +3,25 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
 
 import Home from "./pages/Home";
-import Register from "./pages/register";
+// Dashboard Pages
+import DashboardLayout from "./layouts/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
+import Students from "./pages/Students";
+import Invoices from "./pages/Invoices";
 import CreateInvoice from "./pages/CreateInvoice";
-import Customers from "./pages/Customers";
-import BrandingSettings from "./pages/BrandingSettings";
-import Settings from "./pages/Settings";
 
 export default function App() {
   return (
     <Routes>
-      {/* Guest-only routes (redirect to dashboard if logged in) */}
       <Route path="/" element={<GuestRoute><Home /></GuestRoute>} />
-      <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 
-      {/* Protected routes */}
-      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/dashboard/create" element={<ProtectedRoute><CreateInvoice /></ProtectedRoute>} />
-      <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
-      <Route path="/settings/branding" element={<ProtectedRoute><BrandingSettings /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      {/* Protected routes wrapped in Dashboard Layout */}
+      <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/students" element={<Students />} />
+        <Route path="/invoices" element={<Invoices />} />
+        <Route path="/dashboard/create" element={<CreateInvoice />} />
+      </Route>
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />

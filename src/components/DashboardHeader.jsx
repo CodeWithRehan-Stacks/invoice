@@ -5,7 +5,7 @@ const DashboardHeader = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [ setError] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -32,7 +32,7 @@ const DashboardHeader = () => {
       }
 
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/user", {
+        const response = await fetch("http://127.0.0.1:8000/api/me", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -56,7 +56,7 @@ const DashboardHeader = () => {
     };
 
     fetchUser();
-  }, []);
+  }, [setError]);
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
