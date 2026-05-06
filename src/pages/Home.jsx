@@ -43,8 +43,8 @@ export default function Home() {
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
         <div className="max-w-md animate-fade-in-up relative z-10">
           <div className="flex items-center gap-3 mb-8">
-            <img src={logo} alt="Logo" className="w-12 h-12 object-contain" />
-            <span className="text-2xl font-bold bg-linear-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent">
+            <img src={logo} alt="Logo" className="w-40 object-contain" />
+            <span className="text-3xl font-bold bg-linear-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent">
               InvoiceFlow
             </span>
           </div>

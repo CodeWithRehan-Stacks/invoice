@@ -46,12 +46,12 @@ export default function DashboardLayout() {
         <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200 dark:border-slate-700">
           {sidebarOpen ? (
             <div className="flex items-center gap-2">
-              <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
+              <img src={logo} alt="Logo" className="w-18 h-18 object-contain" />
               <span className="font-bold text-xl tracking-tight text-blue-900 dark:text-white">EduSaaS</span>
             </div>
           ) : (
              <div className="mx-auto flex items-center justify-center">
-               <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
+               <img src={logo} alt="Logo" className="w-18 h-18 object-contain" />
              </div>
           )}
           {sidebarOpen && (
